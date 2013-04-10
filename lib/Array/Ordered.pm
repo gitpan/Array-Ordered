@@ -10,21 +10,21 @@ use Carp;
 
 require Exporter;
 
+our @ISA = qw( Exporter );
+our @EXPORT = qw( order );
+our @EXPORT_OK = qw( order );
+
 =head1 NAME
 
 Array::Ordered - Methods for handling ordered arrays
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 
-our $VERSION = '0.01';
-our @ISA = qw( Exporter );
-our @EXPORT = qw( order );
-our @EXPORT_OK = qw( order );
-my  %CMPSUBS;
+our $VERSION = '0.02';
 
 =head1 SYNOPSIS
 
@@ -73,7 +73,7 @@ my  %CMPSUBS;
 
 =head1 DESCRIPTION
 
-The purpose of the Array::Ordered module is to provide functionality to Perl with methods for accessing and modifying arrays while keeping them sorted.
+The purpose of the Array::Ordered module is to provide the means to access and modify arrays while keeping them sorted.
 
 At the heart of this module are two symmetrical binary search algorithms:
 
@@ -89,7 +89,7 @@ The second returns the index of the last element equal to or less than a matchin
 
 =back
 
-Elements are inserted and deleted from the ordered array using 'splice'.  Because of allocation overhead, this module's methods are intended for relatively small arrays.  See L</TODO>.
+Elements are inserted and deleted from the ordered array using 'splice'.
 
 =head2 TERMINOLOGY
 
@@ -135,23 +135,23 @@ Positive if the first argument should follow the second (greater than)
 
 =end html
 
-The length of every equivalency sequence in a strictly ordered array is 1.  Only an unstrictly ordered array can have equivalency sequences of length greater than 1.
+The length of every equivalency sequence in a strictly ordered array is 1.  Only an unstrictly ordered array can have longer equivalency sequences.
 
 =head1 METHODS
 
-For the purposes of clarity, I have used the following convention for naming variables:
+I have used the following convention for naming variables:
 
 =over
 
-=item
+=item *
 
 A variable is named C<$item> or C<@items> if it refers to data introduced into or removed from the ordered array.
 
-=item
+=item *
 
 A variable is named C<$elem> or C<@elems> if it refers to data accessed and remaining in the ordered array.
 
-=item
+=item *
 
 An argument is named C<$match> when it is used to fish out one or more equivalent elements from the array.
 
@@ -171,13 +171,13 @@ An array reference, and
 
 =item 2
 
-A reference to a L<comparison subroutine|/"Comparison Subroutine">.
+A reference to a comparison subroutine.
 
 =back
 
 The array reference is returned after being tied to the code reference for ordering, the array's contents are sorted, and the reference is blessed.
 
-The method C<order> is exported implicitly.  The decision for this is simply because none of the module's other methods are of any use without it.  Consider it this module's "C<new>" method.
+The method C<order> is exported implicitly.  The decision for this is due to the fact that none of the module's other methods are of any use without it.  Consider it this module's "C<new>" method.
 
     sub lencmp { length $_[0] <=> length $_[1] }
     
@@ -187,7 +187,7 @@ The method C<order> is exported implicitly.  The decision for this is simply bec
     
     $array = order [];                      # Okay: Default comparison is sub { 0 }
     
-    @items = { '3', '001', '02' };
+    my @items = { '3', '001', '02' };
 
     $array = order [@items], \&lencmp;      # Copy of @items ordered by '&lencmp':
                                             # @items is unchanged
@@ -195,6 +195,8 @@ The method C<order> is exported implicitly.  The decision for this is simply bec
                                             # @items is sorted
 
 =cut
+
+my %CMPSUBS;
 
 sub order {
     # @_ == ($self, $cmpsub);
@@ -219,7 +221,7 @@ sub order {
     my ($self,
         $cmpsub)  = @_;
     (defined $cmpsub) or
-        $cmpsub   = \&_default_cmpsub;
+        $cmpsub   = sub { 0 };
 
     (blessed $self) or bless $self;
 
@@ -352,7 +354,7 @@ sub is_reduced {
 
 Reduces the array into a strictly ordered array.
 
-Only the last element of each L<equivalency sequence|/"Equivalency Sequence"> remains unless a C<TRUE> argument is passed, in which case only the first of each remains.
+Only the last element of each equivalency sequence remains unless a C<TRUE> argument is passed, in which case only the first of each remains.
 
     $array->reduce;
     # Same as:
@@ -631,7 +633,7 @@ sub find_all {
 
 =head3 heads
 
-Returns a strictly ordered array containing the first of each L<equivalency sequence|/"Equivalency Sequence">.
+Returns a strictly ordered array containing the first of each equivalency sequence.
 
     @elems = $array->heads;
 
@@ -653,7 +655,7 @@ sub heads {
 
 =head3 tails
 
-Returns a strictly ordered array containing the last of each L<equivalency sequence|/"Equivalency Sequence">.
+Returns a strictly ordered array containing the last of each equivalency sequence.
 
     @elems = $array->tails;
 
@@ -692,7 +694,7 @@ sub remove_all {
 
 =head3 shift_heads
 
-Removes the first of each L<equivalency sequence|/"Equivalency Sequence"> and returns them as a strictly ordered array.
+Removes the first of each equivalency sequence and returns them as a strictly ordered array.
 
     @items = $array->shift_heads;
 
@@ -714,7 +716,7 @@ sub shift_heads {
 
 =head3 pop_tails
 
-Removes the last of each L<equivalency sequence|/"Equivalency Sequence"> and returns them as a strictly ordered array.
+Removes the last of each equivalency sequence and returns them as a strictly ordered array.
 
     @items = $array->pop_tails;
 
@@ -822,8 +824,6 @@ sub _search_down {
     return $max;
 }
 
-sub _default_cmpsub { 0 };
-
 # End Private Methods
 
 =head1 ACKNOWLEDGMENTS
@@ -832,7 +832,7 @@ This module's framework generated with L<C<module-starter>|Module::Starter>.
 
 =head1 AUTHOR
 
-S. Randall Sawyer, C<< <srandallsawyer at cpan.org> >>
+S. Randall Sawyer, C<< <srandalls at cpan.org> >>
 
 =head1 BUGS
 
@@ -846,7 +846,8 @@ You can find documentation for this module with the perldoc command.
 
 =head1 TODO
 
-Write a module for handling large sorted arrays. Probably use a balanced binary tree as a back-end for that.
+Write an XS version so that 'order' works syntactically like 'tie'. 
+Write a module for handling large sorted arrays using a balanced binary tree as a back-end.
 
 =head1 SEE ALSO
 
