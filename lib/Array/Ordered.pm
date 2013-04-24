@@ -8,23 +8,25 @@ use subs qw( last unshift push shift pop sort );
 use Scalar::Util qw( blessed );
 use Carp;
 
+=head1 NAME
+
+Array::Ordered - Methods for handling ordered arrays
+
+=cut
+
 require Exporter;
 
 our @ISA = qw( Exporter );
 our @EXPORT = qw( order );
 our @EXPORT_OK = qw( order );
 
-=head1 NAME
-
-Array::Ordered - Methods for handling ordered arrays
-
 =head1 VERSION
 
-Version 0.02
+Version 0.03
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =head1 SYNOPSIS
 
@@ -221,7 +223,7 @@ sub order {
     my ($self,
         $cmpsub)  = @_;
     (defined $cmpsub) or
-        $cmpsub   = sub { 0 };
+        $cmpsub   = \&_default_cmpsub;
 
     (blessed $self) or bless $self;
 
@@ -823,6 +825,8 @@ sub _search_down {
 
     return $max;
 }
+
+sub _default_cmpsub { 0 };
 
 # End Private Methods
 
